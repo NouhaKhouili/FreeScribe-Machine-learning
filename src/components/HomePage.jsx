@@ -1,7 +1,46 @@
-import React from "react";
+import React, { useRef, useState } from "react";
 
 export default function HomePage(props) {
   const { setAudioSteam, setFile } = props;
+
+  const [recordingStatus, setRecordingStatus] = useState("inactive");
+  const [audioChunks, setAudioChunks] = useState([]);
+  const [duration, setDuration] = useState(0);
+
+  const mediaRecorder = useRef(null);
+  const mimeType = "audio/webm";
+
+  async function startRecording() {
+    let tempStream;
+
+    console.log("start recording");
+    try {
+      const stremData = navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: false,
+      });
+      tempStream = stremData;
+    } catch (err) {
+      console.log(err.message);
+      return;
+    }
+
+    const media = new MediaRecorder(tempStream, { type: mimeType });
+    mediaRecorder.current = media;
+
+    mediaRecorder.current.start();
+    let localAudioChunks = [];
+    mediaRecorder.current.ondataavailable = (event) => {
+      if (typeof event.data === "undefined") {
+        return;
+      }
+      if (event.data.size === 0) {
+        return;
+      }
+      localAudioChunks.push(event.data);
+    };
+    setAudioChunks(localAudioChunks);
+  }
   return (
     <main className=" flex-1 p-4 flex-col justify-center text-center  sm:gap-4 gap-3 md:gap-5 pb-20">
       <h1 className="text-5xl sm:text-6xl md:text-7xl font-semibold text-gray-800">
@@ -31,7 +70,7 @@ export default function HomePage(props) {
         </label>
         a mp3 file
       </p>
-      <p className="italic text-slate-500 ">Free now free forever</p>
+      <p className="italic text-slate-400 ">Free now free forever</p>
     </main>
   );
 }
